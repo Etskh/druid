@@ -1,0 +1,196 @@
+
+
+// Core
+
+#include <memory>
+#include <list>
+
+template< typename T >
+class List : public std::list<T> {
+	// empty
+};
+
+// Math
+
+#include <cmath>
+
+struct Vector3 {
+	Vector3(){
+		x = y = z = 0.0f;
+	}
+	Vector3( float _x, float _y, float _z ) {
+		x = _x;
+		x = _x;
+	}
+	Vector3( const Vector3& ref) {
+		x = ref.x;
+		y = ref.y;
+		z = ref.z;
+	}
+	
+	void operator -= ( const Vector3& ref ) {
+		x -= ref.x;
+		y -= ref.y;
+		z -= ref.y;
+	}
+	
+	Vector3 operator * ( float scalar ) const {
+		return Vector3(x*scalar, y*scalar, z*scalar );
+	}
+	
+	float x, y, z;
+	
+	static const Vector3 Up;
+};
+
+const Vector3 Vector3::Up(0.0f, 1.0f, 0.0f);
+
+
+// GFX
+
+class GFXObject {
+	// empty
+};
+
+
+
+
+// Tree
+
+
+struct TreeConfigs {
+	float baseLength;		// with full energy, how long is a branch
+	float widthHeightRatio; // the width to height ratio (0.2)
+	float maxEnergy;		// the maximum number of divisions
+	float branchEnergyRatio; // when a branch happens, how much energy goes to it
+	float skyCurve;			// the angle at which new nodes point upwards (0.0 - 0.999)
+};
+
+
+
+class Node {
+public:
+	typedef std::shared_ptr< Node > Handle;
+	
+	Node( const TreeConfigs& c, float e )
+		: configs(c)
+		, origin()
+		, width(0.0f)
+		, length(log10(e))
+		, energy(e)
+		, parent(nullptr) {
+		
+		width = length * c.widthHeightRatio;
+		
+		output();
+	}
+	
+	Node( const TreeConfigs& c, float e, Node::Handle p )
+		: configs(c)
+		, origin( p->origin)
+		, width(0.0f)
+		, length( log10(e) )
+		, energy(e)
+		, parent(p) {
+		
+		width = length * c.widthHeightRatio;
+		origin -= Vector3::Up * parent->length;
+		
+		output();
+	}
+	
+	void output() {
+		printf("Node {\n");
+		printf("\torigin: [%.2f, %.2f, %.2f]\n", origin.x, origin.y, origin.z);
+		printf("\twidth: %f\n", width);
+		printf("\tlength: %f\n", length);
+		printf("\tenergy: %f\n", energy);
+		printf("}\n");
+	}
+	
+	size_t count_r() {
+		size_t cnt = children.size();
+		auto c = children.begin();
+		while( c != children.end()) {
+			cnt += (*c)->count_r();
+			c++;
+		}
+		return cnt;
+	}
+
+public:
+	const TreeConfigs& configs;
+	Vector3 origin;	// the 3d placement
+	float width; // the thickness of the node
+	float length; // the length of the branch
+	float energy; // the energy remaining
+	List<Node::Handle> children;
+	Node::Handle parent;
+};
+
+
+
+class Tree : public GFXObject{
+public:
+	typedef std::shared_ptr< Tree > Handle;
+
+	static Tree::Handle generate( int seed, const TreeConfigs& configs ) {
+		Tree::Handle tree(new Tree(configs));
+		
+		tree->_rootNode = Node::Handle(
+			new Node( configs, configs.maxEnergy ));
+		
+		tree->createNode_r( tree->_rootNode, configs.maxEnergy );
+		
+		return tree;
+	}
+
+	size_t nodeCount() {
+		return _rootNode->count_r() + 1;
+	}
+
+private:
+	const TreeConfigs& _configs;
+	unsigned int _nodeCount;
+	Node::Handle _rootNode;
+	
+	Tree ( const TreeConfigs& configs )
+		: _configs(configs) {
+		// empty
+	}
+
+	void createNode_r ( Node::Handle parent, float energy ) {
+		
+		float childEnergy = energy - 1.0f;
+		if( childEnergy < 1 ) {
+			return;
+		}
+		
+		Node::Handle trunk( new Node( _configs, childEnergy, parent) );
+		parent->children.push_back( trunk );
+		createNode_r( trunk, childEnergy );
+		
+		
+		// TODO: wiggle the branch in 3d
+		/*Node::Handle branch( new Node( _configs, length, childEnergy * _configs.branchEnergyRatio ) );
+		parent->children.push_back( branch );
+		createNode_r( branch, branch->energy );
+		*/
+	}
+};
+
+int main( int argc, char* argv[] ) {
+
+	TreeConfigs treeData;
+	
+	treeData.baseLength = 1.0f;
+	treeData.widthHeightRatio = 0.2f;
+	treeData.maxEnergy = 9.0f;
+	treeData.branchEnergyRatio = 0.75f;
+
+	auto tree = Tree::generate( 1, treeData );
+
+	printf("Tree generated with %zu nodes\n", tree->nodeCount() );
+
+	return 0;
+}
