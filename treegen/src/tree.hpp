@@ -2,6 +2,11 @@
 #define _INCLUDED_TREE_HPP
 // Tree
 
+
+
+#include <functional>
+
+
 #include "core.hpp"
 #include "math.hpp"
 #include "gfx.hpp"
@@ -11,12 +16,15 @@ namespace tree {
 
 
 
-
 struct TreeConfigs {
-	float baseLength;		// with full energy, how long is a branch
-	float widthHeightRatio; // the width to height ratio (0.2)
-	float maxEnergy;		// the maximum number of divisions
-	float branchEnergyRatio; // when a branch happens, how much energy goes to it
+	/// With full energy, how long is a branch
+	float baseLength;
+	/// The width to height ratio (0.2)
+	float widthHeightRatio;
+	/// The maximum number of divisions
+	float maxEnergy;
+	/// when a branch happens, how much energy goes to it
+	float branchEnergyRatio;
 	//float lengthVariance; // how much variance does length have in a node (0=baseLength, 0.5= 0.5*baseLength -> 1.5*baseLength)
 	//float branchTrunkRatio; // when a branch splits from the trunk, how much energy is sapped from the trunk to the branch (0.5 = even, 1 = all of it)
 	//float skyCurve;			// the angle at which new nodes point upwards (0.0 - 0.999)
@@ -141,6 +149,41 @@ public:
 		trunk->generateChildren_r( childEnergy );
 	}
 
+
+	void iterateAll_r( std::function<void(const Node::Handle)> callback ) {
+
+		callback(_self);
+
+		auto c = _children.begin();
+		while( c != _children.end()) {
+
+			(*c)->iterateAll_r(callback);
+
+			c++;
+		}
+	}
+
+
+	size_t getId() const {
+		return _id;
+	}
+
+	const Vector3& getGrowthVector() const {
+		return _growthVector;
+	}
+
+	const Vector3& getOrigin() const {
+		return _origin;
+	}
+
+	float getLength() const {
+		return _length;
+	}
+
+	float getWidth() const {
+		return _width;
+	}
+
 private:
 	/// The unique Id for this Node
 	size_t _id;
@@ -174,10 +217,13 @@ size_t Node::s_nextId = 1;
 
 
 
+/// A representation of a tree - generates nodes, meshes, and (eventually) Lods.
 class Tree : public GFXObject {
 public:
+	/// Handle for a tree object
 	typedef std::shared_ptr< Tree > Handle;
 
+	/// Randomly generates a tree given a set of configurations
 	static Tree::Handle generate( int seed, const TreeConfigs& configs ) {
 		Tree::Handle tree(new Tree(configs));
 
@@ -186,8 +232,6 @@ public:
 
 		tree->generateMesh();
 
-		//tree->_rootNode->output_r();
-
 		return tree;
 	}
 
@@ -195,7 +239,7 @@ public:
 		return _rootNode->countChildren_r() + 1;
 	}
 
-	virtual bool outputAsJSON( String*& output ) const {
+	virtual bool outputAsJson( String*& output ) const {
 		*output = "";
 		return true;
 	}
@@ -204,6 +248,7 @@ private:
 	const TreeConfigs& _configs;
 	unsigned int _nodeCount;
 	Node::Handle _rootNode;
+	Mesh::Handle _mesh;
 
 	Tree ( const TreeConfigs& configs )
 		: _configs(configs) {
@@ -211,9 +256,33 @@ private:
 	}
 
 	void generateMesh() {
-		// empty
+		// Create a new mesh
+		_mesh = Mesh::createEmpty();
+
+		// Create the call back iterator
+		auto callback = std::bind(
+			&Tree::createBranchFromNode, this, std::placeholders::_1 );
+
+		// Iterate through them
+		_rootNode->iterateAll_r(callback);
+	}
+
+	void createBranchFromNode( const Node::Handle node ) {
+		// center of cube = origin + growthVector * (length/2)
+		// scale = width, length, width
+		// upvector = growthvector
+
+		Vector3 centre = node->getOrigin();
+		centre += node->getGrowthVector() * ( node->getLength() / 2 );
+		Vector3 scale = Vector3(
+			node->getWidth(), node->getLength(), node->getWidth() );
+
+		_mesh->addCube( centre, node->getGrowthVector(), scale );
+
+		printf("branch %zu\n", node->getId() );
 	}
 };
+
 
 
 }  // namespace tree
