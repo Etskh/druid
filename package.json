@@ -2,5 +2,8 @@
   "name": "druid",
   "dependencies": {
     "express": "^4.13.4"
+  },
+  "scripts": {
+    "start": "node druid.js"
   }
 }

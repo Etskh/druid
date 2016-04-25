@@ -1,7 +1,7 @@
 {
   "targets": [{
       "target_name": "tree",
-      "sources": [ "src/hello.cpp" ],
+      "sources": [ "src/treegen.cpp" ],
       "include_dirs": [ "src" ]
   }]
 }

@@ -18,6 +18,8 @@ void HelloWorld(const FunctionCallbackInfo<Value>& args) {
 }
 
 void Generate(const FunctionCallbackInfo<Value>& args) {
+    Isolate* isolate = args.GetIsolate();
+    HandleScope scope(isolate);
     TreeConfigs treeData;
 
     treeData.baseLength = 1.0f;
@@ -27,9 +29,12 @@ void Generate(const FunctionCallbackInfo<Value>& args) {
 
     auto tree = Tree::generate( 1, treeData );
 
-    Isolate* isolate = args.GetIsolate();
-    HandleScope scope(isolate);
-    args.GetReturnValue().Set(v8::Number::New(isolate, tree->countNodes() ));
+    v8::Local<v8::Object> obj = v8::Object::New(isolate);
+    obj->Set(
+        v8::String::NewFromUtf8(isolate, "nodeCount"),
+        v8::Number::New(isolate, tree->countNodes() )
+    );
+    args.GetReturnValue().Set(obj);
 }
 
 
