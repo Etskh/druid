@@ -278,8 +278,6 @@ private:
 			node->getWidth(), node->getLength(), node->getWidth() );
 
 		_mesh->addCube( centre, node->getGrowthVector(), scale );
-
-		printf("branch %zu\n", node->getId() );
 	}
 };
 

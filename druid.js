@@ -5,7 +5,17 @@ var fs = require('fs');
 
 var treegen = require('./treegen/treegen');
 
-var app = express();
+var config = {
+  baseLength: 15.0,
+  widthHeightRatio: 0.3,
+  maxEnergy: 10.0,
+  branchEnergyRatio: 0.5,
+};
+treegen.generate(config, function( tree ){
+  console.log(JSON.stringify(tree));
+});
+
+/*var app = express();
 
 
 
@@ -17,7 +27,10 @@ app.get('/', function(req, res){
 
 app.get('/assets/tree/generate', function(req, res){
   var config = {
-    baseLength: 15.0
+    baseLength: 15.0,
+    widthHeightRatio: 0.3,
+    maxEnergy: 10.0,
+    branchEnergyRatio: 0.5,
   };
   treegen.generate(config, function( tree ){
     res.send( JSON.stringify(tree));
@@ -26,3 +39,4 @@ app.get('/assets/tree/generate', function(req, res){
 
 
 app.listen(3000);
+*/

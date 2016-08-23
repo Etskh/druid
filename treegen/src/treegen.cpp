@@ -30,9 +30,15 @@ void Generate(const FunctionCallbackInfo<Value>& args) {
         treeData.baseLength = Handle<v8::Value>::Cast(config->Get(
             v8::String::NewFromUtf8(isolate, "baseLength")
         ))->NumberValue();
-        treeData.widthHeightRatio = 0.3f;
-        treeData.maxEnergy = 15.0f;
-        treeData.branchEnergyRatio = 0.5f;
+        treeData.widthHeightRatio = Handle<v8::Value>::Cast(config->Get(
+            v8::String::NewFromUtf8(isolate, "widthHeightRatio")
+        ))->NumberValue();
+        treeData.maxEnergy = Handle<v8::Value>::Cast(config->Get(
+            v8::String::NewFromUtf8(isolate, "maxEnergy")
+        ))->NumberValue();
+        treeData.branchEnergyRatio = Handle<v8::Value>::Cast(config->Get(
+            v8::String::NewFromUtf8(isolate, "branchEnergyRatio")
+        ))->NumberValue();
 
         auto tree = Tree::generate( 1, treeData );
 
