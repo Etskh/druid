@@ -10,12 +10,19 @@ using v8::HandleScope;
 
 using tree::TreeConfigs;
 using tree::Tree;
+using tree::Node;
 
 void HelloWorld(const FunctionCallbackInfo<Value>& args) {
     Isolate* isolate = args.GetIsolate();
     HandleScope scope(isolate);
     args.GetReturnValue().Set(v8::String::NewFromUtf8(isolate, "world"));
 }
+
+
+void treeToObject( v8::Local<v8::Object>* obj, const Node::Handle node ) {
+    printf("Outputing branch\n");
+}
+
 
 void Generate(const FunctionCallbackInfo<Value>& args) {
     Isolate* isolate = args.GetIsolate();
@@ -28,8 +35,14 @@ void Generate(const FunctionCallbackInfo<Value>& args) {
     treeData.branchEnergyRatio = 0.5f;
 
     auto tree = Tree::generate( 1, treeData );
-
     v8::Local<v8::Object> obj = v8::Object::New(isolate);
+
+    // Create the call back iterator
+    auto callback = std::bind( treeToObject, &obj, std::placeholders::_1 );
+
+    // Iterate through them
+    tree->getRootNode()->iterateAll_r(callback);
+
     obj->Set(
         v8::String::NewFromUtf8(isolate, "nodeCount"),
         v8::Number::New(isolate, tree->countNodes() )

@@ -235,6 +235,11 @@ public:
 		return tree;
 	}
 
+
+	Node::Handle getRootNode() {
+		return _rootNode;
+	}
+
 	size_t countNodes() const {
 		return _rootNode->countChildren_r() + 1;
 	}
@@ -278,8 +283,6 @@ private:
 			node->getWidth(), node->getLength(), node->getWidth() );
 
 		_mesh->addCube( centre, node->getGrowthVector(), scale );
-
-		printf("branch %zu\n", node->getId() );
 	}
 };
 
