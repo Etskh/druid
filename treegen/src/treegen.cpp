@@ -7,6 +7,7 @@ using v8::FunctionCallbackInfo;
 using v8::Value;
 using v8::Isolate;
 using v8::HandleScope;
+using v8::Handle;
 
 using tree::TreeConfigs;
 using tree::Tree;
@@ -22,19 +23,29 @@ void Generate(const FunctionCallbackInfo<Value>& args) {
     HandleScope scope(isolate);
     TreeConfigs treeData;
 
-    treeData.baseLength = 1.0f;
-    treeData.widthHeightRatio = 0.3f;
-    treeData.maxEnergy = 15.0f;
-    treeData.branchEnergyRatio = 0.5f;
+    if( args[0]->IsObject()) {
 
-    auto tree = Tree::generate( 1, treeData );
+        Handle<v8::Object> config = Handle<v8::Object>::Cast(args[0]);
 
-    v8::Local<v8::Object> obj = v8::Object::New(isolate);
-    obj->Set(
-        v8::String::NewFromUtf8(isolate, "nodeCount"),
-        v8::Number::New(isolate, tree->countNodes() )
-    );
-    args.GetReturnValue().Set(obj);
+        treeData.baseLength = Handle<v8::Value>::Cast(config->Get(
+            v8::String::NewFromUtf8(isolate, "baseLength")
+        ))->NumberValue();
+        treeData.widthHeightRatio = 0.3f;
+        treeData.maxEnergy = 15.0f;
+        treeData.branchEnergyRatio = 0.5f;
+
+        auto tree = Tree::generate( 1, treeData );
+
+        v8::Local<v8::Object> obj = v8::Object::New(isolate);
+        obj->Set(
+            v8::String::NewFromUtf8(isolate, "nodeCount"),
+            v8::Number::New(isolate, tree->countNodes() )
+        );
+        args.GetReturnValue().Set(obj);
+        return;
+    }
+
+    args.GetReturnValue().Set(v8::Boolean::New(isolate, false));
 }
 
 

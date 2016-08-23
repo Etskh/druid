@@ -82,6 +82,42 @@ Alchemy
 
 
 */
+
+
+$(document).ready(function(){
+	console.log("Druid system ready");
+
+	var scene = new THREE.Scene();
+	var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 20000 );
+
+	var renderer = new THREE.WebGLRenderer();
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	$('#canvas').each(function(){
+		this.appendChild(renderer.domElement);
+	});
+
+	addDebugDrawing( scene );
+	addTerrain( scene, function(terrain) {
+		addTree( scene, terrain );
+	});
+	addSkyBox( scene );
+	addFirstPersonCameraControls( camera, function( controls ) {
+
+		function render() {
+			requestAnimationFrame( render );
+			var delta = 1000 / 600;
+
+			renderer.render( scene, camera );
+			controls.update(delta);
+		}
+
+		render();
+	});
+});
+
+
+
+
 function generateHeight( width, height ) {
 	var size = width * height, data = new Uint8Array( size ),
 	perlin = new ImprovedNoise(), quality = 1, z = Math.random() * 100;
@@ -140,36 +176,6 @@ function generateTexture( data, width, height ) {
 }
 
 
-$(document).ready(function(){
-	console.log("Druid system ready");
-
-	var scene = new THREE.Scene();
-	var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 20000 );
-
-	var renderer = new THREE.WebGLRenderer();
-	renderer.setSize( window.innerWidth, window.innerHeight );
-	$('#canvas').each(function(){
-		this.appendChild(renderer.domElement);
-	});
-
-
-	addDebugDrawing( scene );
-	addTerrain( scene );
-	addSkyBox( scene );
-	addFirstPersonCameraControls( camera, function( controls ) {
-
-		function render() {
-			requestAnimationFrame( render );
-			var delta = 1000 / 600;
-
-			renderer.render( scene, camera );
-			controls.update(delta);
-		}
-
-		render();
-	});
-});
-
 function addFirstPersonCameraControls ( camera, callback ) {
 	var controls = new THREE.FirstPersonControls( camera );
 	camera.position.z = 5;
@@ -208,6 +214,7 @@ function addTerrain( scene, callback ){
 	geometry.rotateX( - Math.PI / 2 );
 
 	var data = generateHeight( worldWidth, worldDepth );
+	console.log(data);
 
 	var vertices = geometry.attributes.position.array;
 	for ( var i = 0, j = 0, l = vertices.length; i < l; i ++, j += 3 ) {
@@ -220,9 +227,16 @@ function addTerrain( scene, callback ){
 	var mesh = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial( { map: texture } ) );
 	mesh.position.y -= 1;
 	scene.add( mesh );
-	console.log("Added debug drawing");
+
+	mesh.getHeight = function( x, y ) {
+		// TODO: if the x,y vector is outside of the terrain, return false
+		// if the x,y vector falls inside it, look up the data
+		return 15;
+	}
+
+	console.log("Added terrain");
 	if( callback ) {
-		callback();
+		callback(mesh);
 	}
 }
 
@@ -249,4 +263,12 @@ function addSkyBox( scene, callback ){
 	if( callback ) {
 		callback();
 	}
+}
+
+
+function addTree( scene, terrain ) {
+
+	// TODO: Get this from 
+
+	scene.add(  );
 }

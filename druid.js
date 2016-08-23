@@ -16,7 +16,10 @@ app.get('/', function(req, res){
 });
 
 app.get('/assets/tree/generate', function(req, res){
-  treegen.generate(function( tree ){
+  var config = {
+    baseLength: 15.0
+  };
+  treegen.generate(config, function( tree ){
     res.send( JSON.stringify(tree));
   });
 });
