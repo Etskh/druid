@@ -19,7 +19,18 @@ void HelloWorld(const FunctionCallbackInfo<Value>& args) {
 }
 
 
-void treeToObject( v8::Local<v8::Object>* obj, const Node::Handle node ) {
+void treeToObject( v8::Local<v8::Array>* array, const Node::Handle node ) {
+    static size_t index = 0;
+
+    v8::Local<v8::Object> obj = v8::Object::New();
+    obj->Set(
+        v8::String::NewFromUtf8(isolate, "length"),
+        v8::Number::New(isolate, node->getLength() )
+    );
+
+    array->Set(index, obj);
+
+    index++;
     printf("Outputing branch with length %.4f\n", node->getLength() );
 }
 
@@ -46,21 +57,19 @@ void Generate(const FunctionCallbackInfo<Value>& args) {
             v8::String::NewFromUtf8(isolate, "branchEnergyRatio")
         ))->NumberValue();
 
+        // Generate a tree and create an object that it will turn into
         auto tree = Tree::generate( 1, treeData );
-        v8::Local<v8::Object> obj = v8::Object::New(isolate);
+        v8::Local<v8::Object> jsonTree = v8::Object::New(isolate);
+        v8::Local<v8::Array> array = v8::Array::New(isolate);
 
+        // Iterate through all the nodes in the tree
+        tree->getRootNode()->iterateAll_r(std::bind( treeToObject, &array, std::placeholders::_1 ));
 
-        // Create the call back iterator
-        auto callback = std::bind( treeToObject, &obj, std::placeholders::_1 );
+        // Set the tree to be the nodes
+        jsonTree->Set(v8::String::NewFromUtf8(isolate, "nodes"), array);
 
-        // Iterate through them
-        tree->getRootNode()->iterateAll_r(callback);
-
-        obj->Set(
-            v8::String::NewFromUtf8(isolate, "nodeCount"),
-            v8::Number::New(isolate, tree->countNodes() )
-        );
-        args.GetReturnValue().Set(obj);
+        // Return the tree object
+        args.GetReturnValue().Set(jsonTree);
         return;
     }
 
