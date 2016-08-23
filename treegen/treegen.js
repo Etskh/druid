@@ -2,6 +2,6 @@
 
 var tree = require("./build/Release/tree");
 
-module.exports.generate = function( cb ) {
-  cb( tree.generate());
+module.exports.generate = function( config, cb ) {
+  cb( tree.generate(config));
 };

@@ -20,7 +20,7 @@ void HelloWorld(const FunctionCallbackInfo<Value>& args) {
 
 
 void treeToObject( v8::Local<v8::Object>* obj, const Node::Handle node ) {
-    printf("Outputing branch\n");
+    printf("Outputing branch with length %.4f\n", node->getLength() );
 }
 
 
@@ -29,30 +29,47 @@ void Generate(const FunctionCallbackInfo<Value>& args) {
     HandleScope scope(isolate);
     TreeConfigs treeData;
 
-    treeData.baseLength = 1.0f;
-    treeData.widthHeightRatio = 0.3f;
-    treeData.maxEnergy = 15.0f;
-    treeData.branchEnergyRatio = 0.5f;
+    if( args[0]->IsObject()) {
 
-    auto tree = Tree::generate( 1, treeData );
-    v8::Local<v8::Object> obj = v8::Object::New(isolate);
+        v8::Handle<v8::Object> config = v8::Handle<v8::Object>::Cast(args[0]);
 
-    // Create the call back iterator
-    auto callback = std::bind( treeToObject, &obj, std::placeholders::_1 );
+        treeData.baseLength = v8::Handle<v8::Value>::Cast(config->Get(
+            v8::String::NewFromUtf8(isolate, "baseLength")
+        ))->NumberValue();
+        treeData.widthHeightRatio = v8::Handle<v8::Value>::Cast(config->Get(
+            v8::String::NewFromUtf8(isolate, "widthHeightRatio")
+        ))->NumberValue();
+        treeData.maxEnergy = v8::Handle<v8::Value>::Cast(config->Get(
+            v8::String::NewFromUtf8(isolate, "maxEnergy")
+        ))->NumberValue();
+        treeData.branchEnergyRatio = v8::Handle<v8::Value>::Cast(config->Get(
+            v8::String::NewFromUtf8(isolate, "branchEnergyRatio")
+        ))->NumberValue();
 
-    // Iterate through them
-    tree->getRootNode()->iterateAll_r(callback);
+        auto tree = Tree::generate( 1, treeData );
+        v8::Local<v8::Object> obj = v8::Object::New(isolate);
 
-    obj->Set(
-        v8::String::NewFromUtf8(isolate, "nodeCount"),
-        v8::Number::New(isolate, tree->countNodes() )
-    );
-    args.GetReturnValue().Set(obj);
+
+        // Create the call back iterator
+        auto callback = std::bind( treeToObject, &obj, std::placeholders::_1 );
+
+        // Iterate through them
+        tree->getRootNode()->iterateAll_r(callback);
+
+        obj->Set(
+            v8::String::NewFromUtf8(isolate, "nodeCount"),
+            v8::Number::New(isolate, tree->countNodes() )
+        );
+        args.GetReturnValue().Set(obj);
+        return;
+    }
+
+    args.GetReturnValue().Set(v8::Boolean::New(isolate, false));
 }
 
 
 void init(v8::Local<v8::Object> target) {
-    NODE_SET_METHOD(target, "hello", HelloWorld);
+    //NODE_SET_METHOD(target, "hello", HelloWorld);
     NODE_SET_METHOD(target, "generate", Generate);
 }
 
