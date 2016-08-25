@@ -1,9 +1,13 @@
 {
   "name": "druid",
   "dependencies": {
+    "druid-treegen": "git+https://github.com/Etskh/druid-treegen.git",
     "express": "^4.13.4"
   },
   "scripts": {
     "start": "node druid.js"
+  },
+  "devDependencies": {
+    "eslint": "^3.3.1"
   }
 }
